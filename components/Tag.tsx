@@ -1,7 +1,7 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
 interface TagProps {
-  children: React.ReactNode;
+  children: ReactNode;
   active?: boolean;
   color?: 'gray' | 'blue' | 'purple' | 'orange' | 'green';
 }

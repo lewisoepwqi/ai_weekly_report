@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import type { Item } from "@/lib/db/schema";
 import { safeJsonParse } from '@/lib/utils/json';
 
@@ -12,17 +11,28 @@ interface OpenSourceSectionProps {
 
 const OpenSourceCard = ({ item }: { item: Item }) => {
   const iconChar = item.title ? item.title.charAt(0).toUpperCase() : '?';
-  const heatData = safeJsonParse<{ stars?: string | number; installs?: string | number }>(item.heat_data, {});
-  const heatDisplay = heatData.stars
-    ? `⭐ ${heatData.stars}`
-    : heatData.installs
-      ? `📦 ${heatData.installs} 安装`
-      : null;
-
+  const heatData = safeJsonParse<{ display?: string | number; text?: string | number; stars?: string | number; installs?: string | number } | string>(item.heat_data, {});
+  const heatDisplay = (() => {
+    if (typeof heatData === 'string') {
+      return heatData.trim() ? heatData : null;
+    }
+    const customText = heatData.display ?? heatData.text;
+    if (customText !== undefined && customText !== null && String(customText).trim()) {
+      return String(customText);
+    }
+    if (heatData.stars) {
+      return `⭐ ${heatData.stars}`;
+    }
+    if (heatData.installs) {
+      return `📦 ${heatData.installs} 安装`;
+    }
+    return null;
+  })();
   const handleCardClick = () => {
     if (item.source_url) {
-      toast.success(`正在跳转: ${item.title}`);
-      window.open(item.source_url, '_blank');
+      const w = window.open(item.source_url, '_blank');
+      if (w) toast.success(`正在跳转: ${item.title}`);
+      else toast.error('请允许弹窗以打开链接');
     }
   };
   
@@ -37,7 +47,7 @@ const OpenSourceCard = ({ item }: { item: Item }) => {
             {iconChar}
           </div>
           <div className="relative overflow-hidden">
-            <h4 className="text-[15px] font-semibold tracking-tight text-[#37352f] dark:text-[#d4d4d4] group-hover:text-[#9b59b6] dark:group-hover:text-[#c486dd] transition-colors line-clamp-2 leading-tight">{item.title}</h4>
+            <h4 className="text-[15px] font-semibold tracking-tight text-[#37352f] dark:text-[#d4d4d4] line-clamp-2 leading-tight">{item.title}</h4>
             
           </div>
         </div>

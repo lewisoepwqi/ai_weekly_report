@@ -24,11 +24,11 @@ export default function Header({ week, selectedCount = 0, weeks = [], currentWee
       <div className="mb-3 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="shrink-0 text-[28px] leading-none md:text-[44px]">
+            <span aria-hidden="true" className="shrink-0 text-[32px] leading-none md:text-[52px]">
               📊
             </span>
-            <h1 className="text-[28px] md:text-page-title leading-tight md:leading-tight truncate max-w-[240px] md:max-w-none">
-              AI设计探针
+            <h1 className="whitespace-nowrap text-[32px] md:text-[52px] font-bold leading-tight tracking-tight">
+              AI设计资讯探针·周报
             </h1>
           </div>
           <div

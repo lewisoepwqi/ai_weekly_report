@@ -39,5 +39,5 @@ export const RawItemSchema = z.object({
   title: z.string().nullable().optional(),
   content: z.string().nullable().optional(),
   url: z.string().nullable().optional(),
-  raw_data: z.union([z.string(), z.record(z.unknown())]).nullable().optional(),
+  raw_data: z.union([z.string(), z.record(z.string(), z.unknown())]).nullable().optional(),
 });

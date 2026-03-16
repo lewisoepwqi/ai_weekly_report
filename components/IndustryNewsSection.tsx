@@ -12,21 +12,36 @@ interface IndustryNewsSectionProps {
   items: Item[];
 }
 
+/** 行业动态卡片：category 到彩色标签的映射 */
+const CATEGORY_COLORS: Record<string, 'blue' | 'purple' | 'orange' | 'green'> = {
+  模型更新: 'blue',
+  设计工具: 'green',
+  生成式UI: 'purple',
+  AI硬件: 'orange',
+  工作流: 'blue',
+  开源项目: 'orange',
+  行业趋势: 'purple',
+  观点争议: 'orange',
+  案例分享: 'green',
+  AI视频: 'purple',
+};
+
 const NewsCard = ({ item }: { item: Item }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const handleCardClick = (title: string) => {
-    toast.success(`正在跳转至: ${title}`);
     if (item.source_url) {
-        window.open(item.source_url, '_blank');
+      const w = window.open(item.source_url, '_blank');
+      if (w) toast.success(`正在跳转至: ${title}`);
+      else toast.error('请允许弹窗以打开链接');
     }
   };
 
   const iconChar = item.title ? item.title.charAt(0).toUpperCase() : '?';
   const tags = safeJsonParse<string[]>(item.tags, []);
-  const mainCategory = item.category || (tags.length > 0 ? tags[0] : "动态");
-  const subCategory = tags.length > 1 ? tags[1] : "";
-  const displayTags = tags.length > 2 ? tags.slice(2) : [];
+  const category = item.category || "动态";
+  const categoryColor = CATEGORY_COLORS[category] ?? 'blue';
+  const keywordTags = tags.slice(0, 3);
 
   return (
     <>
@@ -40,7 +55,7 @@ const NewsCard = ({ item }: { item: Item }) => {
           </div>
           <div className="flex flex-col flex-1">
             <div className="mb-1.5 self-start relative">
-              <h3 className="text-[15px] font-semibold text-[#37352f] dark:text-[#d4d4d4] leading-snug group-hover:text-[#9b59b6] dark:group-hover:text-[#c486dd] transition-colors tracking-tight line-clamp-1">{item.title}</h3>
+              <h3 className="text-[15px] font-semibold text-[#37352f] dark:text-[#d4d4d4] leading-snug tracking-tight line-clamp-1">{item.title}</h3>
               
             </div>
             <p className="text-[13px] font-light text-[#6b6b6b] dark:text-[#a0a0a0] leading-relaxed line-clamp-2">{item.summary}</p>
@@ -54,9 +69,8 @@ const NewsCard = ({ item }: { item: Item }) => {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6 mt-auto overflow-hidden max-h-[28px]">
-          <Tag color="blue">#{mainCategory.replace(/^#/, '')}</Tag>
-          {subCategory && <Tag color="gray">{subCategory.replace(/^#/, '')}</Tag>}
-          {displayTags.map(tag => (
+          <Tag color={categoryColor}>{category.replace(/^#/, '')}</Tag>
+          {keywordTags.map(tag => (
             <Tag key={tag} color="gray">{tag.replace(/^#/, '')}</Tag>
           ))}
         </div>
@@ -70,7 +84,9 @@ const NewsCard = ({ item }: { item: Item }) => {
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
         title={item.title} 
-        insight={item.ai_detail || item.ai_summary || item.highlight || ""} 
+        insight={item.ai_detail || item.ai_summary || item.highlight || ""}
+        summary={item.ai_summary}
+        sourceUrl={item.source_url}
       />
     </>
   );

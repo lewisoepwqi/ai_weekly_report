@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Week } from "@/lib/db/schema";
 import { safeJsonParse } from "@/lib/utils/json";
 

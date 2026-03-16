@@ -57,10 +57,11 @@ export function errNotFound(resource: string, id: string, hint?: string) {
 export function errInternal(e: unknown) {
   const message = e instanceof Error ? e.message : String(e);
   console.error("[API Error]", e);
+  const detail = process.env.NODE_ENV === "production" ? undefined : { message };
   return apiError(
     500,
     "Internal server error",
     "Check server logs for details.",
-    { message },
+    detail,
   );
 }

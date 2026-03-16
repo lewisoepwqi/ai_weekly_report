@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import Image from 'next/image';
+import { useState } from 'react';
 import type { Item } from "@/lib/db/schema";
 import { AIReaderButton } from './AIReaderButton';
 import { AIReaderModal } from './AIReaderModal';
@@ -17,8 +18,9 @@ const HotTopicCard = ({ item }: { item: Item }) => {
   
   const handleCardClick = (url?: string) => {
     if (url) {
-      toast.success(`正在跳转`);
-      window.open(url, '_blank');
+      const w = window.open(url, '_blank');
+      if (w) toast.success(`正在跳转`);
+      else toast.error('请允许弹窗以打开链接');
     }
   };
 
@@ -63,9 +65,11 @@ const HotTopicCard = ({ item }: { item: Item }) => {
           <div className="flex justify-between items-center pt-4 border-t border-[#f1f1ef] dark:border-[#333333]">
             <div className="flex items-center gap-2.5 min-w-0">
               {/* Avatar */}
-              <img 
-                src={item.author_avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=64&h=64&q=80"} 
+              <Image
+                src={item.author_avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=64&h=64&q=80"}
                 alt={item.author || "User"}
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-full border border-[#e3e2e0] dark:border-[#444444] object-cover shrink-0"
               />
               {/* Text Info */}
@@ -91,7 +95,9 @@ const HotTopicCard = ({ item }: { item: Item }) => {
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
         title={item.title || `题: ${item.category || "观点"}`} 
-        insight={item.ai_detail || item.ai_summary || highlightText} 
+        insight={item.ai_detail || item.ai_summary || highlightText}
+        summary={item.ai_summary}
+        sourceUrl={item.source_url}
       />
     </>
   );

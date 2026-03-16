@@ -6,27 +6,29 @@
 
 ### 鉴权
 
-管理接口（`/api/data/*`）需要在请求头中携带 API Key：
+管理写接口需要 `x-api-key` 请求头：
 
-```
+```http
 x-api-key: <API_KEY>
 ```
 
-`API_KEY` 通过环境变量配置。未携带或不匹配时返回 `401 Unauthorized`。
+`API_KEY` 由环境变量配置。缺失或不匹配返回 `401`。
 
-公开接口（`/api/week/*`、`/api/data/status`）无需鉴权。
+### 响应约定
 
-### 通用响应格式
+当前接口存在两类成功响应：
 
-成功：
-```json
-{ "ok": true, ... }
-```
+1. 带 `ok: true` 的管理接口响应（如 `/api/data/*`）
+2. 直接返回业务对象/数组的公开读取接口（如 `/api/week/list`、`/api/week/:weekId`）
 
-失败：
-```json
-{ "error": "错误描述" }
-```
+错误响应统一为 JSON，包含 `error`，多数包含 `fix`，验证失败包含 `issues`。
+
+### 网关与安全头
+
+- 所有 API 响应均带 `x-request-id` 与 `x-api-version: 1`
+- 已启用基础限流，响应头包含 `RateLimit-Limit`、`RateLimit-Remaining`、`RateLimit-Reset`
+- 当反向代理传入 `x-forwarded-proto: http` 且非本地环境时，接口会重定向到 HTTPS
+- 已统一下发安全响应头：`X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy`、`Permissions-Policy`、`Content-Security-Policy`
 
 ---
 
@@ -34,14 +36,8 @@ x-api-key: <API_KEY>
 
 ### GET /api/data/status
 
-系统状态概览，返回最新期信息、未处理原始数据数和已处理条目总数。
+系统状态概览。
 
-**请求**
-```
-GET /api/data/status
-```
-
-**响应**
 ```json
 {
   "ok": true,
@@ -60,18 +56,10 @@ GET /api/data/status
 }
 ```
 
----
-
 ### GET /api/week/list
 
-获取所有**已发布**期列表（用于前端导航）。
+获取已发布期列表。
 
-**请求**
-```
-GET /api/week/list
-```
-
-**响应**
 ```json
 [
   {
@@ -79,341 +67,292 @@ GET /api/week/list
     "period": "第 2 期",
     "date_range": "2026.03.11-03.17",
     "status": "published"
-  },
-  {
-    "id": "2026-W10",
-    "period": "第 1 期",
-    "date_range": "2026.03.04-03.10",
-    "status": "published"
   }
 ]
 ```
 
----
-
 ### GET /api/week/:weekId
 
-获取指定期的完整数据（前端渲染用）。
+获取指定期完整数据（前端渲染用）。
 
-**请求**
-```
-GET /api/week/2026-W10
-```
-
-**响应**
 ```json
 {
-  "week": {
-    "id": "2026-W10",
-    "period": "第 1 期",
-    "date_range": "2026.03.04-03.10",
-    "intro": "...",
-    "keywords": "[\"多模态\",\"Vibe Coding\"]",
-    "data_source_line": "覆盖 RSS、主动检索...",
-    "status": "published"
-  },
-  "topThree": [ /* Item[] */ ],
-  "industry": [ /* Item[] */ ],
-  "designTools": [ /* Item[] */ ],
-  "opensource": [ /* Item[] */ ],
-  "hotTopics": [ /* Item[] */ ],
-  "sourceInfo": {
-    "week_id": "2026-W10",
-    "categories": "[{\"name\":\"科技媒体\",\"examples\":[...]}]",
-    "statement": "通过 RSS 订阅...",
-    "representative_sources": "{\"total\":392,\"selected\":28}"
-  },
+  "week": {},
+  "topThree": [],
+  "industry": [],
+  "designTools": [],
+  "opensource": [],
+  "hotTopics": [],
+  "sourceInfo": null,
   "totalItems": 18,
   "selectedItems": 18
 }
 ```
 
-**404** 当 weekId 不存在：
-```json
-{ "error": "Week not found" }
-```
-
 ---
 
-## 管理接口（需鉴权）
+## 管理接口
 
 ### POST /api/data/raw
 
-写入原始采集数据。支持单条或批量。
+写入原始采集数据，支持单条或数组。
 
-**请求**
-```
-POST /api/data/raw
-x-api-key: <API_KEY>
-Content-Type: application/json
-```
-
-单条：
 ```json
 {
   "source_type": "rss",
   "source_name": "The Verge AI",
   "title": "OpenAI releases GPT-5",
   "content": "Article content preview...",
-  "url": "https://example.com/article"
+  "url": "https://example.com/article",
+  "raw_data": "{\"extra\":true}"
 }
 ```
 
-批量（数组）：
+成功响应：
+
+```json
+{ "ok": true, "inserted": 1 }
+```
+
+### GET /api/data/weeks
+
+获取所有期（含 draft），管理视角。
+
 ```json
 [
-  { "source_type": "rss", "source_name": "TechCrunch", "title": "...", "content": "...", "url": "..." },
-  { "source_type": "github", "source_name": "GitHub Trending", "title": "...", "content": "...", "url": "..." }
+  {
+    "id": "2026-W11",
+    "period": "第 2 期",
+    "date_range": "2026.03.11-03.17",
+    "status": "draft",
+    "created_at": "2026-03-11T00:00:00.000Z",
+    "updated_at": "2026-03-11T00:00:00.000Z"
+  }
 ]
 ```
 
-**字段说明**
+### POST /api/data/weeks
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| source_type | string | 是 | `rss` / `github` / `skillsmp` / `social` |
-| source_name | string | 否 | 来源名称，如 "The Verge AI" |
-| title | string | 否 | 标题 |
-| content | string | 否 | 正文/摘要 |
-| url | string | 否 | 原文链接 |
-| raw_data | string | 否 | JSON 字符串，存放额外元数据 |
-
-**响应**
-```json
-{ "ok": true, "inserted": 2 }
-```
-
----
-
-### GET /api/data/weeks/:weekId
-
-获取指定期的管理视图数据（含所有 items，不区分 section）。
-
-**请求**
-```
-GET /api/data/weeks/2026-W10
-x-api-key: <API_KEY>
-```
-
-**响应**
-```json
-{
-  "ok": true,
-  "week": { /* Week 对象 */ },
-  "items": [ /* 该期所有 Item[] */ ]
-}
-```
-
----
-
-### PUT /api/data/weeks/:weekId
-
-统一写入接口，通过 `action` 字段区分操作。
-
-#### action: `publish`
-
-将指定期状态改为 published，前端即可展示。
-
-```json
-{ "action": "publish" }
-```
-
-**响应**
-```json
-{ "ok": true, "action": "published", "weekId": "2026-W10" }
-```
-
----
-
-#### action: `upsert_week`
-
-创建或更新期元数据。weekId 不存在则创建，存在则更新。
+创建或更新期元数据。
 
 ```json
 {
-  "action": "upsert_week",
+  "id": "2026-W11",
   "period": "第 2 期",
   "date_range": "2026.03.11-03.17",
   "intro": "本周 AI 设计领域...",
-  "keywords": "[\"Agent\",\"多模态\"]",
-  "data_source_line": "共处理 420 条，精选 30 条"
+  "keywords": ["Agent", "多模态"],
+  "data_source_line": "共处理 420 条，精选 30 条",
+  "status": "draft"
 }
 ```
 
-**字段说明**
+成功响应：
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| period | string | 是 | 期号，如 "第 2 期" |
-| date_range | string | 是 | 日期范围，如 "2026.03.11-03.17" |
-| intro | string | 否 | 一句话导读 |
-| keywords | string | 否 | JSON 数组字符串 |
-| data_source_line | string | 否 | 头部数据说明 |
-| status | string | 否 | `draft` / `published`，默认 draft |
-
-**响应**
 ```json
-{ "ok": true, "action": "upserted", "weekId": "2026-W11" }
+{ "ok": true, "weekId": "2026-W11", "action": "created" }
 ```
 
----
+### GET /api/data/weeks/:weekId
 
-#### action: `replace_items`
-
-全量替换指定期的所有 items（先删除旧数据再插入新数据）。
+获取指定期完整数据（分 section 聚合），返回：
 
 ```json
 {
-  "action": "replace_items",
+  "ok": true,
+  "data": {
+    "week": {},
+    "topThree": [],
+    "industry": [],
+    "designTools": [],
+    "opensource": [],
+    "hotTopics": [],
+    "sourceInfo": null,
+    "totalItems": 18,
+    "selectedItems": 18
+  }
+}
+```
+
+### PUT /api/data/weeks/:weekId
+
+组合写入接口，支持一次请求内同时操作 week/items/source_info/publish。
+
+```json
+{
+  "week": {
+    "period": "第 2 期",
+    "date_range": "2026.03.11-03.17",
+    "intro": "本周 AI 设计领域...",
+    "keywords": ["Agent", "多模态"],
+    "data_source_line": "共处理 420 条，精选 30 条",
+    "status": "draft"
+  },
   "items": [
     {
       "section": "top_three",
       "title": "Claude 4 发布",
       "summary": "Anthropic 发布新一代模型...",
-      "highlight": "视觉理解能力跃升",
-      "category": "模型更新",
-      "tags": "[\"多模态\",\"视觉理解\"]",
-      "source_url": "https://anthropic.com/blog",
-      "source_platform": "Anthropic Blog",
-      "ai_summary": "AI 解读摘要...",
       "ai_detail": "① 影响...\n② 依据...\n③ 建议动作...",
       "sort_order": 0
     }
-  ]
-}
-```
-
-**Item 字段说明**
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| section | string | 是 | `top_three` / `industry` / `design_tools` / `opensource` / `hot_topics` |
-| title | string | 是 | 标题 |
-| summary | string | 否 | 2-3 句摘要 |
-| highlight | string | 否 | 一句话亮点（≤20字） |
-| category | string | 否 | 类别标签 |
-| tags | string | 否 | JSON 数组字符串 |
-| image_url | string | 否 | 封面图 URL |
-| logo_url | string | 否 | Logo/图标 URL |
-| source_url | string | 否 | 原文链接 |
-| source_platform | string | 否 | 来源平台名，如 "GitHub"、"X"、"即刻" |
-| source_date | string | 否 | 来源日期 |
-| source_type | string | 否 | `rss` / `github` / `skillsmp` / `social` |
-| author | string | 否 | 作者名 |
-| author_label | string | 否 | 作者身份标签，如 "资深产品设计师" |
-| author_avatar | string | 否 | 作者头像 URL |
-| heat_data | string | 否 | JSON 字符串，如 `{"stars":"5.1k"}` |
-| ai_summary | string | 否 | AI 解读摘要（1-2 句） |
-| ai_detail | string | 否 | AI 解读详情（① ② ③ 格式） |
-| sort_order | number | 否 | 排序权重，默认 0 |
-
-**响应**
-```json
-{ "ok": true, "action": "items_replaced", "count": 18 }
-```
-
----
-
-#### action: `update_item`
-
-按 id 更新单条 item 的指定字段。
-
-```json
-{
-  "action": "update_item",
-  "id": 42,
-  "field": "ai_detail",
-  "value": "① 新的影响说明\n② 新的依据\n③ 新的建议动作"
-}
-```
-
-**可更新字段**：`title`、`summary`、`highlight`、`ai_summary`、`ai_detail`、`tags`、`heat_data`、`sort_order`、`image_url`、`logo_url`
-
-**响应**
-```json
-{ "ok": true, "action": "item_updated", "id": 42, "field": "ai_detail" }
-```
-
----
-
-#### action: `upsert_source_info`
-
-写入/更新指定期的数据来源信息（展示在页面底部）。
-
-```json
-{
-  "action": "upsert_source_info",
-  "categories": [
-    { "name": "科技媒体", "examples": ["The Verge", "TechCrunch"] },
-    { "name": "官方博客", "examples": ["OpenAI Blog", "Anthropic Blog"] },
-    { "name": "开源社区", "examples": ["GitHub Trending"] }
   ],
-  "statement": "通过 RSS 订阅、关键词搜索、GitHub API 采集，经 AI 筛选去重后精选。",
-  "representative_sources": { "total": 392, "selected": 28 }
+  "source_info": {
+    "categories": "[{\"name\":\"科技媒体\",\"examples\":[\"The Verge\"]}]",
+    "statement": "通过 RSS 订阅、关键词搜索、GitHub API 采集，经 AI 筛选去重后精选。",
+    "representative_sources": "{\"total\":392,\"selected\":28}"
+  },
+  "publish": true
 }
 ```
 
-> `categories` 和 `representative_sources` 可以传 JSON 对象或 JSON 字符串，接口自动处理。
+成功响应：
 
-**响应**
 ```json
-{ "ok": true, "action": "source_info_upserted", "weekId": "2026-W10" }
+{ "ok": true, "weekId": "2026-W11" }
 ```
 
----
+### PATCH /api/data/weeks/:weekId
+
+仅更新期元数据，不影响 items。
+
+```json
+{
+  "intro": "本周 AI 设计能力持续演进",
+  "keywords": ["多模态", "Vibe Coding"]
+}
+```
+
+成功响应：
+
+```json
+{ "ok": true, "weekId": "2026-W11" }
+```
+
+### POST /api/data/weeks/:weekId
+
+发布指定期（将 status 更新为 `published`）。
+
+成功响应：
+
+```json
+{ "ok": true, "weekId": "2026-W11", "status": "published" }
+```
 
 ### DELETE /api/data/weeks/:weekId
 
-删除指定期的所有 items（不删除 week 记录本身）。
+删除指定期、其 items、其 source_info。
 
-**请求**
-```
-DELETE /api/data/weeks/2026-W10
-x-api-key: <API_KEY>
-```
+成功响应：
 
-**响应**
 ```json
-{ "ok": true, "weekId": "2026-W10", "action": "items_deleted" }
+{ "ok": true, "weekId": "2026-W11" }
+```
+
+### GET /api/data/weeks/:weekId/source-info
+
+读取来源信息。
+
+```json
+{
+  "ok": true,
+  "data": {
+    "week_id": "2026-W11",
+    "categories": "[{\"name\":\"科技媒体\",\"examples\":[\"The Verge\"]}]",
+    "statement": "通过 RSS 订阅...",
+    "representative_sources": "{\"total\":392,\"selected\":28}",
+    "updated_at": "2026-03-11T00:00:00.000Z"
+  }
+}
+```
+
+### PUT /api/data/weeks/:weekId/source-info
+
+更新来源信息。
+
+```json
+{
+  "categories": "[{\"name\":\"科技媒体\",\"examples\":[\"The Verge\"]}]",
+  "statement": "通过 RSS 订阅...",
+  "representative_sources": "{\"total\":392,\"selected\":28}"
+}
+```
+
+成功响应：
+
+```json
+{ "ok": true, "weekId": "2026-W11" }
 ```
 
 ---
 
-## OpenClaw 完整对接流程
+## 调用流程（当前实现）
 
-以下是 OpenClaw 从采集到发布的典型调用顺序：
-
-```
-1. POST /api/data/raw              ← 写入原始采集数据（可多次调用）
-2. PUT  /api/data/weeks/2026-W11   ← action=upsert_week 创建期元数据
-   { "action": "upsert_week", "period": "第 2 期", "date_range": "..." }
-
-3. PUT  /api/data/weeks/2026-W11   ← action=replace_items 写入处理后的 items
-   { "action": "replace_items", "items": [...] }
-
-4. PUT  /api/data/weeks/2026-W11   ← action=upsert_source_info 写入来源信息
-   { "action": "upsert_source_info", "categories": [...], ... }
-
-5. PUT  /api/data/weeks/2026-W11   ← action=publish 发布
-   { "action": "publish" }
-```
-
-### 调试 & 验证
-
-```
-GET /api/data/status               ← 查看系统总览
-GET /api/data/weeks/2026-W11       ← 查看写入的数据（需鉴权）
-GET /api/week/2026-W11             ← 模拟前端取数（无需鉴权）
+```text
+1. POST /api/data/raw
+2. POST /api/data/weeks                （创建周）
+3. PUT  /api/data/weeks/:weekId        （写入 items/source_info，可带 publish）
+4. 或 POST /api/data/weeks/:weekId     （独立发布）
 ```
 
 ---
 
 ## 错误码
 
-| HTTP 状态码 | 含义 |
-|------------|------|
-| 200 | 成功 |
-| 400 | 请求参数错误（缺少必填字段、未知 action 等） |
-| 401 | 未授权（缺少或错误的 x-api-key） |
-| 404 | 资源不存在（weekId 未找到） |
-| 500 | 服务端错误 |
+| HTTP 状态码 | 含义 | 常见触发场景 |
+|------------|------|--------------|
+| 400 | 参数验证失败 / JSON 非法 | 字段缺失、类型错误、JSON 格式错误 |
+| 401 | 鉴权失败 | 缺少 `x-api-key` 或 API Key 错误 |
+| 403 | 跨域来源不允许 | `Origin` 不在允许列表 |
+| 404 | 资源不存在 | weekId 不存在、source_info 不存在 |
+| 409 | 约束冲突 | 外键约束失败 |
+| 429 | 请求过于频繁 | 触发限流策略 |
+| 500 | 服务端错误 | DB/运行时异常 |
+
+400 验证失败示例：
+
+```json
+{
+  "ok": false,
+  "error": "Request body validation failed",
+  "fix": "Fix the fields listed in `issues` and retry.",
+  "issues": [
+    { "field": "id", "message": "Required" }
+  ]
+}
+```
+
+401 鉴权失败示例：
+
+```json
+{
+  "ok": false,
+  "error": "Unauthorized",
+  "fix": "Add header: x-api-key: <your API_KEY>",
+  "detail": {
+    "header_name": "x-api-key",
+    "received": "missing"
+  }
+}
+```
+
+429 限流示例：
+
+```json
+{
+  "ok": false,
+  "error": "Too Many Requests",
+  "fix": "Retry after a short delay.",
+  "detail": {
+    "requestId": "7eec57d1-2d78-4a6f-8d80-0c4f8f5337b0"
+  }
+}
+```
+
+---
+
+## 版本与兼容性
+
+- 当前未启用 URL/Header 版本号（如 `/api/v1` 或 `x-api-version`）。
+- 当前未提供字段级废弃声明机制（如 `deprecated`、`sunset_date`）。
+- 对接方应将 `docs/API.md` 与 `skills/SKILL.md` 视为同版本契约，并在发布前校验差异。

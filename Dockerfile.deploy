@@ -13,6 +13,9 @@ COPY . .
 # Build (produces .next/standalone)
 RUN npm run build
 
+# Initialize database with seed data
+RUN mkdir -p data && node tools/seed.js
+
 # ─── Stage 2: Production runtime ──────────────────────────────────────────────
 FROM node:22-alpine AS runner
 
@@ -31,6 +34,9 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/tools ./tools
+
+# Copy the pre-initialized database
+COPY --from=builder /app/data/weekly.db ./data/weekly.db
 
 # libsql uses dynamic require() for platform-specific native binaries.
 # Next.js standalone trace cannot detect them — copy explicitly.

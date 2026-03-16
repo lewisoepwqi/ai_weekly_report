@@ -1,8 +1,8 @@
-import React from 'react';
+import type { MouseEvent } from 'react';
 import { Sparkle } from 'lucide-react';
 
 interface AIReaderButtonProps {
-  onClick: (e: React.MouseEvent) => void;
+  onClick: (e: MouseEvent) => void;
 }
 
 export const AIReaderButton = ({ onClick }: AIReaderButtonProps) => (
