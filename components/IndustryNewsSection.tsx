@@ -12,6 +12,19 @@ interface IndustryNewsSectionProps {
   items: Item[];
 }
 
+const CATEGORY_COLORS: Record<string, 'blue' | 'purple' | 'orange' | 'green'> = {
+  模型更新: 'blue',
+  设计工具: 'green',
+  生成式UI: 'purple',
+  AI硬件: 'orange',
+  工作流: 'blue',
+  开源项目: 'orange',
+  行业趋势: 'purple',
+  观点争议: 'orange',
+  案例分享: 'green',
+  AI视频: 'purple',
+};
+
 const NewsCard = ({ item }: { item: Item }) => {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -24,9 +37,9 @@ const NewsCard = ({ item }: { item: Item }) => {
 
   const iconChar = item.title ? item.title.charAt(0).toUpperCase() : '?';
   const tags = safeJsonParse<string[]>(item.tags, []);
-  const mainCategory = item.category || (tags.length > 0 ? tags[0] : "动态");
-  const subCategory = tags.length > 1 ? tags[1] : "";
-  const displayTags = tags.length > 2 ? tags.slice(2) : [];
+  const category = item.category || "动态";
+  const categoryColor = CATEGORY_COLORS[category] ?? 'blue';
+  const keywordTags = tags.slice(0, 3);
 
   return (
     <>
@@ -54,9 +67,8 @@ const NewsCard = ({ item }: { item: Item }) => {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6 mt-auto overflow-hidden max-h-[28px]">
-          <Tag color="blue">#{mainCategory.replace(/^#/, '')}</Tag>
-          {subCategory && <Tag color="gray">{subCategory.replace(/^#/, '')}</Tag>}
-          {displayTags.map(tag => (
+          <Tag color={categoryColor}>{category.replace(/^#/, '')}</Tag>
+          {keywordTags.map(tag => (
             <Tag key={tag} color="gray">{tag.replace(/^#/, '')}</Tag>
           ))}
         </div>
