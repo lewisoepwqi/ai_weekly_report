@@ -2,7 +2,8 @@ export function safeJsonParse<T>(value: string | null | undefined, fallback: T):
   if (!value) return fallback;
   try {
     return JSON.parse(value) as T;
-  } catch {
+  } catch (error) {
+    console.error('JSON parse failed:', error, 'value:', value?.substring(0, 200));
     return fallback;
   }
 }
