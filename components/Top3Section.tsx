@@ -98,7 +98,9 @@ const Top3Card = ({ item }: { item: Item }) => {
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
         title={item.title} 
-        insight={item.ai_detail || item.ai_summary || item.highlight || ""} 
+        insight={item.ai_detail || item.ai_summary || item.highlight || ""}
+        summary={item.ai_summary}
+        sourceUrl={item.source_url}
       />
     </>
   );

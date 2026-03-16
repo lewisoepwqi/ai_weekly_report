@@ -91,7 +91,9 @@ const HotTopicCard = ({ item }: { item: Item }) => {
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
         title={item.title || `题: ${item.category || "观点"}`} 
-        insight={item.ai_detail || item.ai_summary || highlightText} 
+        insight={item.ai_detail || item.ai_summary || highlightText}
+        summary={item.ai_summary}
+        sourceUrl={item.source_url}
       />
     </>
   );
