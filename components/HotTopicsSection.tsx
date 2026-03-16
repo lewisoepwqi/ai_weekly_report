@@ -17,8 +17,9 @@ const HotTopicCard = ({ item }: { item: Item }) => {
   
   const handleCardClick = (url?: string) => {
     if (url) {
-      toast.success(`正在跳转`);
-      window.open(url, '_blank');
+      const w = window.open(url, '_blank');
+      if (w) toast.success(`正在跳转`);
+      else toast.error('请允许弹窗以打开链接');
     }
   };
 
@@ -91,7 +92,9 @@ const HotTopicCard = ({ item }: { item: Item }) => {
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
         title={item.title || `题: ${item.category || "观点"}`} 
-        insight={item.ai_detail || item.ai_summary || highlightText} 
+        insight={item.ai_detail || item.ai_summary || highlightText}
+        summary={item.ai_summary}
+        sourceUrl={item.source_url}
       />
     </>
   );

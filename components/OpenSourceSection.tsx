@@ -12,13 +12,19 @@ interface OpenSourceSectionProps {
 
 const OpenSourceCard = ({ item }: { item: Item }) => {
   const iconChar = item.title ? item.title.charAt(0).toUpperCase() : '?';
-  const heatData = safeJsonParse<{ stars?: string | number }>(item.heat_data, {});
-  const stars = heatData.stars ? `${heatData.stars}` : "N/A";
+  /** heat_data 支持 stars(GitHub) 和 installs(SkillsMP) 两类 */
+  const heatData = safeJsonParse<{ stars?: string | number; installs?: string | number }>(item.heat_data, {});
+  const heatDisplay = heatData.stars
+    ? `⭐ ${heatData.stars}`
+    : heatData.installs
+      ? `📦 ${heatData.installs} 安装`
+      : null;
   
   const handleCardClick = () => {
     if (item.source_url) {
-      toast.success(`正在跳转: ${item.title}`);
-      window.open(item.source_url, '_blank');
+      const w = window.open(item.source_url, '_blank');
+      if (w) toast.success(`正在跳转: ${item.title}`);
+      else toast.error('请允许弹窗以打开链接');
     }
   };
   
@@ -33,13 +39,15 @@ const OpenSourceCard = ({ item }: { item: Item }) => {
             {iconChar}
           </div>
           <div className="relative overflow-hidden">
-            <h4 className="text-[15px] font-semibold tracking-tight text-[#37352f] dark:text-[#d4d4d4] group-hover:text-[#9b59b6] dark:group-hover:text-[#c486dd] transition-colors line-clamp-2 leading-tight">{item.title}</h4>
+            <h4 className="text-[15px] font-semibold tracking-tight text-[#37352f] dark:text-[#d4d4d4] line-clamp-2 leading-tight">{item.title}</h4>
             
           </div>
         </div>
-        <div className="text-[12px] font-normal text-[#6b6b6b] dark:text-[#b0b0b0] flex items-center bg-[#f1f1ef] dark:bg-[#2c2c2c] px-2 py-1 rounded-lg shrink-0 ml-2">
-          {stars} <span className="ml-1 text-yellow-500 text-sm">★</span>
-        </div>
+        {heatDisplay && (
+          <div className="text-[12px] font-normal text-[#6b6b6b] dark:text-[#b0b0b0] flex items-center bg-[#f1f1ef] dark:bg-[#2c2c2c] px-2 py-1 rounded-lg shrink-0 ml-2">
+            {heatDisplay}
+          </div>
+        )}
       </div>
       
       <p className="text-[13px] font-light text-[#6b6b6b] dark:text-[#a0a0a0] leading-relaxed line-clamp-2 mb-6 min-h-[42px]">

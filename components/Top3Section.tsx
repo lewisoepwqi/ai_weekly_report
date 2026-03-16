@@ -15,10 +15,10 @@ const Top3Card = ({ item }: { item: Item }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const handleCardClick = (title: string) => {
-    toast.success(`正在跳转至: ${title}`);
-    // In a real app, you might want to window.open(item.source_url)
     if (item.source_url) {
-        window.open(item.source_url, '_blank');
+      const w = window.open(item.source_url, '_blank');
+      if (w) toast.success(`正在跳转至: ${title}`);
+      else toast.error('请允许弹窗以打开链接');
     }
   };
 
@@ -67,7 +67,7 @@ const Top3Card = ({ item }: { item: Item }) => {
               <Tag color="gray">#{category}</Tag>
             </div>
             <div className="mb-2 self-start relative">
-              <h3 className="text-[16px] font-semibold text-[#37352f] dark:text-[#f0f0f0] leading-tight group-hover:text-[#9b59b6] dark:group-hover:text-[#c486dd] transition-colors tracking-tight">
+              <h3 className="text-[16px] font-semibold text-[#37352f] dark:text-[#f0f0f0] leading-tight tracking-tight">
                 {item.title}
               </h3>
               
@@ -98,7 +98,9 @@ const Top3Card = ({ item }: { item: Item }) => {
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
         title={item.title} 
-        insight={item.ai_detail || item.ai_summary || item.highlight || ""} 
+        insight={item.ai_detail || item.ai_summary || item.highlight || ""}
+        summary={item.ai_summary}
+        sourceUrl={item.source_url}
       />
     </>
   );
