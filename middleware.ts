@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) ?? [];
+const DISABLE_HTTPS_REDIRECT = process.env.DISABLE_HTTPS_REDIRECT === "true";
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_READ = 3000;
 const RATE_LIMIT_WRITE = 300;
@@ -72,7 +73,8 @@ export function middleware(req: NextRequest) {
   const hostname = req.nextUrl.hostname;
   const isLocal = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
   const forwardedProto = req.headers.get("x-forwarded-proto");
-  if (!isLocal && forwardedProto === "http") {
+  // 允许通过环境变量禁用 HTTPS 强制跳转（用于 Docker 内网部署等场景）
+  if (!DISABLE_HTTPS_REDIRECT && !isLocal && forwardedProto === "http") {
     const url = req.nextUrl.clone();
     url.protocol = "https:";
     return NextResponse.redirect(url, 308);
