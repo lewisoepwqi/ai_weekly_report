@@ -65,13 +65,21 @@ const HotTopicCard = ({ item }: { item: Item }) => {
           <div className="flex justify-between items-center pt-4 border-t border-[#f1f1ef] dark:border-[#333333]">
             <div className="flex items-center gap-2.5 min-w-0">
               {/* Avatar */}
-              <Image
-                src={item.author_avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=64&h=64&q=80"}
-                alt={item.author || "User"}
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-full border border-[#e3e2e0] dark:border-[#444444] object-cover shrink-0"
-              />
+              {item.author_avatar ? (
+                <Image
+                  src={item.author_avatar}
+                  alt={item.author || "User"}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full border border-[#e3e2e0] dark:border-[#444444] object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full border border-[#e3e2e0] dark:border-[#444444] bg-[#f7f6f3] dark:bg-[#2c2c2c] flex items-center justify-center shrink-0">
+                  <span className="text-[13px] font-semibold text-[#37352f] dark:text-[#d4d4d4]">
+                    {(item.author || "?").charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               {/* Text Info */}
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5 min-w-0">
