@@ -39,4 +39,4 @@ COPY --from=builder /app/node_modules/@libsql ./node_modules/@libsql
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node tools/init-db.js && exec node server.js"]

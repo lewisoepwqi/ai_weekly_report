@@ -17,7 +17,7 @@ dist
 .gitignore
 .DS_Store
 tsconfig.tsbuildinfo
-data
+/data
 skills
 docs
 figma-design-full.png
