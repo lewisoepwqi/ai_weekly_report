@@ -1,0 +1,65 @@
+version: '3.8'
+
+# 本地测试专用 Docker Compose 配置
+# 用法: docker-compose -f docker-compose.local.yml up -d
+
+services:
+  openclaw-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openclaw:local-test
+    container_name: openclaw-gateway-local
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      TZ: ${OPENCLAW_TZ:-Asia/Shanghai}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-local-test-token}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      BAILIAN_API_KEY: ${BAILIAN_API_KEY:-}
+      FEISHU_APP_ID: ${FEISHU_APP_ID:-}
+      FEISHU_APP_SECRET: ${FEISHU_APP_SECRET:-}
+      FEISHU_DOMAIN: ${FEISHU_DOMAIN:-feishu}
+      FEISHU_CONNECTION_MODE: ${FEISHU_CONNECTION_MODE:-websocket}
+    volumes:
+      - ./config:/home/node/.openclaw:rw
+      - ./workspace:/home/node/.openclaw/workspace:rw
+      - openclaw-memory-local:/home/node/.openclaw/memory
+    ports:
+      - "17654:17654"
+      - "17655:17655"
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:17654/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: ["start.sh"]
+    networks:
+      - openclaw-local
+
+  # 测试工具容器
+  test-client:
+    image: curlimages/curl:latest
+    container_name: openclaw-test-client
+    depends_on:
+      openclaw-gateway:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts:ro
+    entrypoint: ["sh", "-c", "echo '测试客户端就绪' && tail -f /dev/null"]
+    networks:
+      - openclaw-local
+    profiles:
+      - test
+
+volumes:
+  openclaw-memory-local:
+
+networks:
+  openclaw-local:
+    driver: bridge

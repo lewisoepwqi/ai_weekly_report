@@ -1,0 +1,118 @@
+name: ai-weekly-report
+
+services:
+  weekly-report:
+    build:
+      context: ./ai_weekly_report
+      dockerfile: Dockerfile
+    image: ai-weekly-report:latest
+    restart: unless-stopped
+    ports:
+      - "${WEEKLY_REPORT_PORT:-3000}:3000"
+    volumes:
+      - weekly-report-data:/app/data
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      DATABASE_PATH: /app/data/weekly.db
+      API_KEY: ${API_KEY:?set API_KEY in .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      DISABLE_HTTPS_REDIRECT: "true"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/api/data/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  openclaw-gateway:
+    build:
+      context: ./openclaw
+      dockerfile: Dockerfile
+      args:
+        OPENCLAW_VERSION: ${OPENCLAW_VERSION:-2026.3.13}
+        FEISHU_PLUGIN_VERSION: ${FEISHU_PLUGIN_VERSION:-2026.3.8}
+        DINGTALK_PLUGIN_VERSION: ${DINGTALK_PLUGIN_VERSION:-3.2.0}
+        WEIXIN_VERSION: ${WEIXIN_VERSION:-1.0.2}
+    image: openclaw:stable-multi-channel
+    restart: unless-stopped
+    init: true
+    depends_on:
+      weekly-report:
+        condition: service_healthy
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      TZ: ${TZ:-Asia/Shanghai}
+
+      OPENCLAW_GATEWAY_BIND: ${OPENCLAW_GATEWAY_BIND:-lan}
+      OPENCLAW_GATEWAY_PORT: ${OPENCLAW_GATEWAY_PORT:-17654}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?set OPENCLAW_GATEWAY_TOKEN in .env}
+
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      BAILIAN_API_KEY: ${BAILIAN_API_KEY:-}
+
+      FEISHU_APP_ID: ${FEISHU_APP_ID:-}
+      FEISHU_APP_SECRET: ${FEISHU_APP_SECRET:-}
+      FEISHU_DOMAIN: ${FEISHU_DOMAIN:-feishu}
+      FEISHU_CONNECTION_MODE: ${FEISHU_CONNECTION_MODE:-websocket}
+
+      ENABLE_WEIXIN_PLUGIN: ${ENABLE_WEIXIN_PLUGIN:-1}
+      WEIXIN_VERSION: ${WEIXIN_VERSION:-1.0.2}
+
+      WEEKLY_REPORT_API_URL: http://weekly-report:3000
+      WEEKLY_REPORT_API_KEY: ${API_KEY:?set API_KEY in .env}
+
+    volumes:
+      - openclaw-home:/home/node
+
+    ports:
+      - "${OPENCLAW_GATEWAY_EXTERNAL_PORT:-17654}:${OPENCLAW_GATEWAY_PORT:-17654}"
+      - "${OPENCLAW_BRIDGE_EXTERNAL_PORT:-17655}:17655"
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:${OPENCLAW_GATEWAY_PORT:-17654}/healthz >/dev/null || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  openclaw-cli:
+    image: openclaw:stable-multi-channel
+    profiles: ["cli"]
+    init: true
+    stdin_open: true
+    tty: true
+    network_mode: "service:openclaw-gateway"
+    depends_on:
+      openclaw-gateway:
+        condition: service_started
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      TZ: ${TZ:-Asia/Shanghai}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?set OPENCLAW_GATEWAY_TOKEN in .env}
+    volumes:
+      - openclaw-home:/home/node
+    entrypoint: ["openclaw"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+
+volumes:
+  weekly-report-data:
+  openclaw-home:

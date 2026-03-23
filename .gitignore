@@ -27,3 +27,47 @@ npm-debug.log*
 .DS_Store
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+
+# large files
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.rar
+*.7z
+
+# logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# testing
+coverage/
+.nyc_output/
+
+# openclaw sensitive files
+openclaw/config/credentials/
+openclaw/config/agents/main/sessions/
+openclaw/config/identity/
+openclaw/config/feishu.json
+openclaw/config/dingtalk.json
+openclaw/config/weekly-report-mcp.json
+openclaw/config/update-check.json
+openclaw/config/openclaw.json.bak*
+
+# backup files
+*.bak
+*.bak.*
+*.backup
+
+# local settings
+.claude/settings.local.json
+
+# deploy packages
+ai-weekly-deploy.zip
