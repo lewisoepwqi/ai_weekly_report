@@ -21,9 +21,26 @@ services:
       FEISHU_DOMAIN: ${FEISHU_DOMAIN:-feishu}
       FEISHU_CONNECTION_MODE: ${FEISHU_CONNECTION_MODE:-websocket}
     volumes:
-      - ${OPENCLAW_CONFIG_DIR:-./config}:/home/node/.openclaw
-      - ${OPENCLAW_WORKSPACE_DIR:-./workspace}:/home/node/.openclaw/workspace
-      - openclaw-memory:/home/node/.openclaw/memory
+      - type: bind
+        source: ${OPENCLAW_CONFIG_DIR:-./data/config}
+        target: /home/node/.openclaw
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_WORKSPACE_DIR:-./data/workspace}
+        target: /home/node/.openclaw/workspace
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_MEMORY_DIR:-./data/memory}
+        target: /home/node/.openclaw/memory
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_EXTENSIONS_DIR:-./data/extensions}
+        target: /home/node/.openclaw/extensions
+        bind:
+          create_host_path: true
     ports:
       - "${OPENCLAW_GATEWAY_PORT:-17654}:17654"
       - "${OPENCLAW_BRIDGE_PORT:-17655}:17655"
@@ -52,9 +69,26 @@ services:
       TZ: ${OPENCLAW_TZ:-Asia/Shanghai}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-change-me}
     volumes:
-      - ${OPENCLAW_CONFIG_DIR:-./config}:/home/node/.openclaw
-      - ${OPENCLAW_WORKSPACE_DIR:-./workspace}:/home/node/.openclaw/workspace
-      - openclaw-memory:/home/node/.openclaw/memory
+      - type: bind
+        source: ${OPENCLAW_CONFIG_DIR:-./data/config}
+        target: /home/node/.openclaw
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_WORKSPACE_DIR:-./data/workspace}
+        target: /home/node/.openclaw/workspace
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_MEMORY_DIR:-./data/memory}
+        target: /home/node/.openclaw/memory
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_EXTENSIONS_DIR:-./data/extensions}
+        target: /home/node/.openclaw/extensions
+        bind:
+          create_host_path: true
     stdin_open: true
     tty: true
     init: true
@@ -62,5 +96,3 @@ services:
     depends_on:
       - openclaw-gateway
 
-volumes:
-  openclaw-memory:

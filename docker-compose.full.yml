@@ -10,7 +10,11 @@ services:
     ports:
       - "${WEEKLY_REPORT_PORT:-3000}:3000"
     volumes:
-      - weekly-report-data:/app/data
+      - type: bind
+        source: ${WEEKLY_REPORT_DATA_DIR:-./data/weekly-report}
+        target: /app/data
+        bind:
+          create_host_path: true
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -68,11 +72,30 @@ services:
       ENABLE_WEIXIN_PLUGIN: ${ENABLE_WEIXIN_PLUGIN:-1}
       WEIXIN_VERSION: ${WEIXIN_VERSION:-1.0.2}
 
-      WEEKLY_REPORT_API_URL: http://weekly-report:3000
-      WEEKLY_REPORT_API_KEY: ${API_KEY:?set API_KEY in .env}
+      WEEKLY_REPORT_API_URL: ${WEEKLY_REPORT_API_URL:-http://weekly-report:3000}
+      WEEKLY_REPORT_API_KEY: ${WEEKLY_REPORT_API_KEY:-${API_KEY:?set API_KEY in .env}}
 
     volumes:
-      - openclaw-home:/home/node
+      - type: bind
+        source: ${OPENCLAW_CONFIG_DIR:-./data/openclaw/config}
+        target: /home/node/.openclaw
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_WORKSPACE_DIR:-./data/openclaw/workspace}
+        target: /home/node/.openclaw/workspace
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_MEMORY_DIR:-./data/openclaw/memory}
+        target: /home/node/.openclaw/memory
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_EXTENSIONS_DIR:-./data/openclaw/extensions}
+        target: /home/node/.openclaw/extensions
+        bind:
+          create_host_path: true
 
     ports:
       - "${OPENCLAW_GATEWAY_EXTERNAL_PORT:-17654}:${OPENCLAW_GATEWAY_PORT:-17654}"
@@ -105,7 +128,26 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:?set OPENCLAW_GATEWAY_TOKEN in .env}
     volumes:
-      - openclaw-home:/home/node
+      - type: bind
+        source: ${OPENCLAW_CONFIG_DIR:-./data/openclaw/config}
+        target: /home/node/.openclaw
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_WORKSPACE_DIR:-./data/openclaw/workspace}
+        target: /home/node/.openclaw/workspace
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_MEMORY_DIR:-./data/openclaw/memory}
+        target: /home/node/.openclaw/memory
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${OPENCLAW_EXTENSIONS_DIR:-./data/openclaw/extensions}
+        target: /home/node/.openclaw/extensions
+        bind:
+          create_host_path: true
     entrypoint: ["openclaw"]
     security_opt:
       - no-new-privileges:true
@@ -113,6 +155,3 @@ services:
       - NET_RAW
       - NET_ADMIN
 
-volumes:
-  weekly-report-data:
-  openclaw-home:

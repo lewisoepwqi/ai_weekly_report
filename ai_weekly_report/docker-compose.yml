@@ -6,7 +6,11 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
+      - type: bind
+        source: ${WEEKLY_REPORT_DATA_DIR:-./data}
+        target: /app/data
+        bind:
+          create_host_path: true
     environment:
       NODE_ENV: production
       DATABASE_PATH: /app/data/weekly.db
