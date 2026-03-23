@@ -1,10 +1,13 @@
 # dependencies
 node_modules/
+ai_weekly_report/node_modules/
 
 # next.js build
 .next/
 .next-dev/
 out/
+ai_weekly_report/.next/
+ai_weekly_report/out/
 
 # production
 dist/
@@ -19,6 +22,9 @@ data/*.db-shm
 .env
 .env.local
 .env.*.local
+ai_weekly_report/.env
+ai_weekly_report/.env.local
+ai_weekly_report/.env.*.local
 
 # debug
 npm-debug.log*
@@ -27,6 +33,9 @@ npm-debug.log*
 .DS_Store
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+ai_weekly_report/.DS_Store
+ai_weekly_report/*.tsbuildinfo
+ai_weekly_report/tsconfig.tsbuildinfo
 
 # large files
 *.zip
@@ -46,6 +55,8 @@ logs/
 *.swp
 *.swo
 *~
+ai_weekly_report/.vscode/
+ai_weekly_report/.idea/
 
 # testing
 coverage/
@@ -68,6 +79,7 @@ openclaw/config/openclaw.json.bak*
 
 # local settings
 .claude/settings.local.json
+ai_weekly_report/.claude/settings.local.json
 
 # deploy packages
 ai-weekly-deploy.zip
