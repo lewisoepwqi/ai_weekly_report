@@ -6,6 +6,7 @@ ARG OPENCLAW_VERSION=2026.3.13
 ARG FEISHU_PLUGIN_VERSION=2026.3.8
 ARG DINGTALK_PLUGIN_VERSION=3.2.0
 ARG WEIXIN_VERSION=1.0.2
+ARG DEBIAN_MIRROR=aliyun
 
 ENV NODE_ENV=production \
     HOME=/home/node \
@@ -16,7 +17,14 @@ ENV NODE_ENV=production \
     NPM_CONFIG_AUDIT=false \
     WEIXIN_VERSION=${WEIXIN_VERSION}
 
-RUN apt-get update && \
+RUN if [ "$DEBIAN_MIRROR" = "tsinghua" ]; then \
+      sed -i 's|http://deb.debian.org/debian|https://mirrors.tuna.tsinghua.edu.cn/debian|g' /etc/apt/sources.list.d/debian.sources && \
+      sed -i 's|http://security.debian.org/debian-security|https://mirrors.tuna.tsinghua.edu.cn/debian-security|g' /etc/apt/sources.list.d/debian.sources; \
+    else \
+      sed -i 's|http://deb.debian.org/debian|https://mirrors.aliyun.com/debian|g' /etc/apt/sources.list.d/debian.sources && \
+      sed -i 's|http://security.debian.org/debian-security|https://mirrors.aliyun.com/debian-security|g' /etc/apt/sources.list.d/debian.sources; \
+    fi && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
