@@ -44,7 +44,6 @@ services:
     ports:
       - "${OPENCLAW_GATEWAY_PORT:-17654}:17654"
       - "${OPENCLAW_BRIDGE_PORT:-17655}:17655"
-    init: true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:17654/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
